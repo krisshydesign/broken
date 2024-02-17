@@ -1,0 +1,124 @@
+1.FIRST STEP!!!
+(1.0)Connect internet and update database keyring
+root@archiso~# localectl list-keymaps
+root@archiso~# loadkeys us
+root@archiso~# setfont ter-132n
+root@archiso~# reflector --country 'Indonesia,Singapore,' 
+
+//root@archiso~# nano /etc/xdg/reflector/reflector.conf (for automation)
+
+result:
+--save /etc/pacman.d/mirrorlist.reflector
+--country Indonesia,Singapore,
+--protocol https
+--latest 5
+
+//root@archiso~# systemctl enable reflector.service (for automation)
+//root@archiso~# systemctl start reflector.service (for automation)
+
+root@archiso~# cat /sys/firmware/efi/fw_platform_size (verify the boot mode)
+root@archiso~# ip link
+root@archiso~# ip addr show
+root@archiso~# iwctl
+[iwd]# device list
+[iwd]# device (device) set-property Powered on (if wlan0 or etc)
+[iwd]# adapter (adapter) set-property Powered on(if adapter)
+[iwd]# station (device) scan
+[iwd]# station (device) get-networks
+[iwd]# station (device) connect SSID
+[iwd]# exit
+root@archiso~# iwctl --passphrase "password" station wlan0 connect YOURWIFI (if passphrase is required)
+root@archiso~# curl ipinfo.io `or` ip addr show
+root@archiso~# cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup.first
+root@archiso~# curl -o /etc/pacman.d/mirrorlist.all.backup https://archlinux.org/mirrorlist/all/
+root@archiso~# curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist/all/ (https onlyWorld Wide, Indonesia, Singapore)
+
+root@archiso~# timedatectl
+root@archiso~# pacman-key --init
+root@archiso~# pacman-key --populate archlinux
+root@archiso~# pacman -Sy pacman-mirrorlist
+root@archiso~# pacman -S archlinux-keyring
+root@archiso~# pacman -S archinstall (if want to useit)
+
+2.Partitions our disk 
+(2.1)[For newbie users]
+root@archiso~# lsblk `or` fdisk -l
+root@archiso~# fdisk `or` cfdisk /dev/your_disk (w for write on fdisk)
+
+result:
+Device				Size	Type			MOUNT_POINT
+/dev/efi_system_partition	1024M	EFI System		/mnt/boot/efi
+/dev/boot_parititon		1024M	Linux filesystem	/mnt/boot
+/dev/swap_partition		4G/8G	Linux swap		SWAP
+/dev/root_partition		"rest"	Linux filesystem	/mnt
+
+root@archiso~# mkfs.fat -F32 /dev/efi_system_partition
+root@archiso~# mkfs.ext4 /dev/boot_partition (grub or systemd-boot)
+root@archiso~# mkswap /dev/swap_partition
+root@archiso~# mkfs.ext4 /dev/root_partition
+
+
+(2.2)[For Advanced users]
+resulit:
+Device				Size	Type			MOUNT_POINT
+/dev/efi_system_partition	1024M	EFI System		/mnt/boot/EFI
+/dev/boot/partition		1024M	Linux filesystem	/mnt/boot
+/dev/swap_partition		4G/8G	Linux swap		[SWAP]
+/dev/lvm_partition		"rest"	Linux LVM		(set first)
+
+root@archiso~# pvcreate
+
+
+
+3.Mount the file systems
+(3.2.1)
+root@archiso~# mount /dev/root_partition /mnt
+root@archiso~# mkdir /mnt/boot
+root@archiso~# mount /dev/boot_partition /mnt/boot
+root@archiso~# swapon /dev/swap_partition
+
+4.Installation
+root@archiso~# pacstrap -i /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware intel-ucode nano curl archlinux-keyring git sudo bat intel-media-driver cmake gcc cargo python make
+
+root@archiso~# genfstab -U /mnt >> /mnt/etc/fstab
+root@archiso~# arch-chroot /mnt (login into chroot)
+
+
+root@archiso~# cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup.first
+root@archiso~# curl -o /etc/pacman.d/mirrorlist.all.backup https://archlinux.org/mirrorlist/all/
+root@archiso~# curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist/all/ (https only=World Wide, Indonesia, Singapore)
+
+pacman -Suy pacman-mirrorlist
+root@archiso~# passwd (root password)
+root@archiso~# useradd -m -g users -G wheel shelby
+root@archiso~# passwd shelby
+root@archiso~# nano /etc/pacman.conf (uncoment color & uncoment multilib)
+root@archiso~# pacman -Sy base-devel dosfstools grub efibootmgr mtools networkmanager unzip gdb libinput libliftoff libdisplay-info cpio tomlplusplus wlroots devtools kitty sddm hyprland ninja meson libxcb xcb-proto xcb-util xcb-util-keysyms libxfixes libx11 libxcomposite xorg-xinput libxrender pixman wayland-protocols cairo pango seatd libxkbcommon xcb-util-wm xorg-xwayland os-prober
+
+
+root@archiso~# ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+root@archiso~# hwclock --systohc
+root@archiso~# nano /etc/locale-gen (CTRL+w en_US.UTF-8)
+root@archiso~# locale-gen
+root@archiso~# nano /etc/locale.conf (LANG=en_US.UTF-8)
+root@archiso~# nano /etc/hostname (greenDay-X1)
+root@archiso~# mkinitcpio -P linux
+//root@archiso~# mkinitcpio -p linux-lts
+
+root@archiso~# mkdir /boot/EFI
+root@archiso~# mount /dev/sda1 /boot/EFI
+root@archiso~# grub-install --target=x86_64-efi --botloader-id=grub_uefi --recheck
+root@archiso~# cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
+root@archiso~# grub-mkconfig -o /boot/grub/grub.cfg
+root@archiso~# systemctl enable NetworkManager
+root@archiso~# exit (you've done)
+
+root@archiso~# umount -a
+root@archiso~# reboot
+
+git clone --recursive https://github.com/hyprwm/Hyprland
+cd Hyprland
+make all && sudo make install
+
+https://wiki.hyprland.org/Getting-Started/Installation/
+https://wiki.archlinux.org/title/Hyprland

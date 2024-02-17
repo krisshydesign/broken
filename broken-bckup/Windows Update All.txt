@@ -1,0 +1,14 @@
+Windows Update All
+Enable feature
+Disable useless App & Service
+
+/install
+All VC-Redist
+Brave
+Cloudflare
+XNA Framework Redist 4.0 Refresh
+NetWorx
+Python
+Adobe Acrobat
+MS Office
+Winrar
