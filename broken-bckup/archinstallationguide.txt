@@ -23,7 +23,7 @@ root@archiso~# curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist
 
 root@archiso~# pacman-key --init
 root@archiso~# pacman-key --populate archlinux
-root@archiso~# pacman -Sy archlinux-keyring
+root@archiso~# pacman -Sy pacman-mirrorlist archlinux-keyring
 
 2.Partitions our disk 
 (2.1)[For newbie users]
@@ -31,11 +31,11 @@ root@archiso~# lsblk `or` fdisk -l
 root@archiso~# fdisk `or` cfdisk /dev/your_disk (w for write on fdisk)
 
 result:
-Device				Size	Type			MOUNT_POINT
-/dev/efi_system_partition	1024M	EFI System		/mnt/boot/efi
-/dev/boot_parititon		1024M	Linux filesystem	/mnt/boot
-/dev/swap_partition		4G/8G	Linux swap		SWAP
-/dev/root_partition		"rest"	Linux filesystem	/mnt
+Device				              Size	  Type			        MOUNT_POINT
+/dev/efi_system_partition	  1024M	  EFI System		    /mnt/boot/efi
+/dev/boot_parititon		      1024M	  Linux filesystem	/mnt/boot
+/dev/swap_partition		      4G/8G	  Linux swap		    SWAP
+/dev/root_partition		      "rest"	Linux filesystem	/mnt
 
 root@archiso~# mkfs.fat -F32 /dev/efi_system_partition
 root@archiso~# mkfs.ext4 /dev/boot_partition (grub or systemd-boot)
@@ -45,12 +45,14 @@ root@archiso~# mkfs.ext4 /dev/root_partition
 
 (2.2)[For Advanced users]
 resulit:
-Device				Size	Type			MOUNT_POINT
-/dev/efi_system_partition	1024M	EFI System		/mnt/boot/EFI
-/dev/boot/partition		1024M	Linux filesystem	/mnt/boot
-/dev/swap_partition		4G/8G	Linux swap		[SWAP]
-/dev/lvm_partition		"rest"	Linux LVM		(set first)
+Device				              Size	        Type			        MOUNT_POINT
+/dev/efi_system_partition	  1024M	        EFI System		    /mnt/boot/EFI
+/dev/boot/partition		      1024M	        Linux filesystem	/mnt/boot
+/dev/swap_partition		      4G/8G	        Linux swap		    [SWAP]
+/dev/lvm_partition		      "rest"	      Linux LVM		      (set first)
 
+root@archiso~# cryptsetup
+root@archiso~# cryptsetup
 root@archiso~# pvcreate
 root@archiso~# vgcreate
 root@archiso~# lvcreate
@@ -61,45 +63,70 @@ root@archiso~# lvcreate
 root@archiso~# mount /dev/root_partition /mnt
 root@archiso~# mkdir /mnt/boot
 root@archiso~# mount /dev/boot_partition /mnt/boot
-root@archiso~# swapon /dev/swap_partition
+//root@archiso~# swapon /dev/swap_partition
+root@archiso~# lsblk
 
 4.Installation
-root@archiso~# pacstrap -i /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware intel-ucode
+root@archiso~# pacstrap -i /mnt base base-devel linux linux-headers linux-lts linux-lts-headers linux-firmware git nano lsd htop neofetch man mlocate sudo zip unzip zsh zsh-auto-suggestion zsh-completions zsh-syntax-highlighting 
 
+root@archiso~# cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 root@archiso~# genfstab -U /mnt >> /mnt/etc/fstab
 root@archiso~# arch-chroot /mnt (login into chroot)
 
-root@archiso~# curl -o /etc/pacman.d/mirrorlist https://archlinux.org/mirrorlist/all/ (https only=World Wide, Indonesia, Singapore)
-root@archiso~# pacman -Suy pacman-mirrorlist
+root@archiso~# chsh -s /bin/zsh
+root@archiso~# curl -o /etc/pacman.d/mirrorlist.all https://archlinux.org/mirrorlist/all/ (uncomment https only=World Wide, Indonesia, Singapore)
 root@archiso~# passwd (root password)
 root@archiso~# useradd -m -g users -G wheel YOURNAME
 root@archiso~# passwd YOURNAME
 root@archiso~# nano /etc/pacman.conf (uncoment color)
+root@archiso~# nano /etc/sudoers
 
-root@archiso~# base-devel gcc cmake make rust cargo python devtools dosfstools grub efibootmgr lvm2 mtools nano code intellij-idea-community-edition os-prober sudo firefox intel-media-driver zram-generator git bat unzip gdb mlocate man pipewire yakuake kde
-
-root@archiso~# pacman -Suy base-devel gcc cmake make rust cargo python devtools dosfstools grub efibootmgr lvm2 mtools nano code intellij-idea-community-edition os-prober sudo firefox intel-media-driver zram-generator git bat unzip gdb wlroots cpio kitty mlocate man pipewire xdg-desktop-portal-hyprland dolphin wofi vulkan-intel libinput libliftoff libdisplay-info libx11 xorg-xinput libxrender pixman wayland-protocols cairo pango xcb-util-wm
-
-root@archiso~# ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+root@archiso~# ln -sf /usr/share/zoneinfo/*Region*/*City* /etc/localtime
 root@archiso~# hwclock --systohc
 root@archiso~# nano /etc/locale-gen (CTRL+w en_US.UTF-8)
 root@archiso~# locale-gen
-root@archiso~# nano /etc/locale.conf (LANG=en_US.UTF-8)
-root@archiso~# nano /etc/hostname (greenDay-X1)
+root@archiso~# echo LANG=en_US.UTF-8 >> /etc/locale.conf
+root@archiso~# echo greenDay-X1 >> /etc/hostname
+root@archiso~# nano /etc/hosts
+result:
+127.0.0.1   localhost.localdomain    localhost 
+::1         localhost.localdomain    localhost
+127.0.1.1   greenDay-X1.localdomain  greenDay-X1
+
 //root@archiso~# nano /etc/mkinitcpio.conf (add> "encrypt lvm2" 'on line HOOKS and after blocks)
 root@archiso~# mkinitcpio -P linux
 root@archiso~# mkinitcpio -p linux-lts
 
+root@archiso~# bootctl --path=/boot install
+root@archiso~# nano /boot/loader/entries/arch.conf (add following content)
+tittle    Arch
+linux     /vmlinuz-linux
+initrd    /initramfs-linux.img
+initrd    /intel-ucode.img
+options   root=/dev/root_partition rw
+
+root@archiso~# /boot/loader/loader.conf (add following content)
+timeout 5
+default arch
+
+root@archiso~# pacman -Suy dosfstools grub efibootmgr lvm2 intel-ucode intel-media-driver vulkan-intel os-prober
 //root@archiso~# nano /etc/default/grub (cryptdevice=/dev/nvme0n1p3=volgroup0 'on GRUB_CMD_LINE before quiet')
-root@archiso~# mkdir /boot/EFI
-root@archiso~# mount /dev/sda1 /boot/EFI
-root@archiso~# grub-install --target=x86_64-efi --botloader-id=grub_uefi --recheck
+root@archiso~# mkdir /efi
+root@archiso~# mount /dev/efi_system_partitition /efi
+//root@archiso~# grub-install --target=x86_64-efi --botloader-id=grub_uefi --recheck
+root@archiso~# grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=grub --recheck
 root@archiso~# cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 root@archiso~# grub-mkconfig -o /boot/grub/grub.cfg
+
+
+root@archiso~# pacman -Suy pacman-mirrorlist archlinux-keyring gcc cmake make rust cargo python go devtools mtools iw networkmanager dialog zram-generator gdb pipewire ttf-roboto terminus-fonts ttf-jetbrains-mono intellij-idea-community-edition firefox
+
+
 root@archiso~# systemctl enable NetworkManager
 root@archiso~# exit (you've done)
 
-root@archiso~# umount -a
+root@archiso~# umount -R /mnt
+lsblk
 root@archiso~# reboot
 
 
